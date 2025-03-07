@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { FloatingOverlay } from '../components/FloatingOverlay';
+// import { FloatingOverlay } from '../components/FloatingOverlay';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 
@@ -31,7 +31,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="+not-found" />
       </Stack>
-      <FloatingOverlay text={clipboardText} />
+      {/* <FloatingOverlay text={clipboardText} /> */}
       <StatusBar style="auto" />
     </>
   );
