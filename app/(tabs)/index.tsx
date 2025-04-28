@@ -34,15 +34,19 @@ export default function HomeScreen() {
     setResult(null);
 
     try {
-      const response = await fetch('https://a018-34-82-5-125.ngrok-free.app/debate', {
+      const response = await fetch('https://a7df-2409-40c2-204e-daff-40b8-1b11-93db-1f31.ngrok-free.app/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ statement: clipboardText }),
+        body: JSON.stringify({
+          message: {
+            text: clipboardText
+          }
+        }),
       });
 
-      const data: ApiResponse = await response.json(); // Ensure the response is typed
+      const data: ApiResponse = await response.json();
       setResult(data);
     } catch (err) {
       setError('Error sending request. Please try again.');
