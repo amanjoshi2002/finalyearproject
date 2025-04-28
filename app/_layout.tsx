@@ -1,9 +1,15 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-// import { FloatingOverlay } from '../components/FloatingOverlay';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
+import { HistoryProvider } from '../contexts/HistoryContext';
+
+declare global {
+  interface Window {
+    frameworkReady?: () => void;
+  }
+}
 
 export default function RootLayout() {
   const [clipboardText, setClipboardText] = useState('');
@@ -27,12 +33,11 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <HistoryProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="+not-found" />
       </Stack>
-      {/* <FloatingOverlay text={clipboardText} /> */}
       <StatusBar style="auto" />
-    </>
+    </HistoryProvider>
   );
 }

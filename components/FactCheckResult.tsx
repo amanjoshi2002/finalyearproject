@@ -1,17 +1,13 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { FactCheck as ApiFactCheck } from '../types/api';
 
-export type FactCheck = {
-  id: string;
-  claim: string;
-  verdict: 'true' | 'false' | 'partially-true';
-  explanation: string;
-  source: string;
-  date: string;
-};
+interface FactCheckResultProps {
+  result: ApiFactCheck;
+}
 
-export function FactCheckResult({ result }: { result: FactCheck }) {
-  const getVerdictColor = (verdict: FactCheck['verdict']) => {
+export function FactCheckResult({ result }: FactCheckResultProps) {
+  const getVerdictColor = (verdict: ApiFactCheck['verdict']) => {
     switch (verdict) {
       case 'true':
         return '#22c55e';
@@ -24,7 +20,7 @@ export function FactCheckResult({ result }: { result: FactCheck }) {
     }
   };
 
-  const getVerdictIcon = (verdict: FactCheck['verdict']) => {
+  const getVerdictIcon = (verdict: ApiFactCheck['verdict']) => {
     switch (verdict) {
       case 'true':
         return 'checkmark-circle';
@@ -51,11 +47,11 @@ export function FactCheckResult({ result }: { result: FactCheck }) {
       </View>
 
       <Text style={styles.claim}>{result.claim}</Text>
-      <Text style={styles.explanation}>{result.explanation}</Text>
+      <Text style={styles.summaryText}>{result.summary}</Text>
       
       <View style={styles.footer}>
         <Text style={styles.source}>Source: {result.source}</Text>
-        <Text style={styles.date}>{result.date}</Text>
+        <Text style={styles.date}>{new Date(result.timestamp).toLocaleDateString()}</Text>
       </View>
     </View>
   );
@@ -96,7 +92,7 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginBottom: 8,
   },
-  explanation: {
+  summaryText: {
     fontSize: 16,
     color: '#475569',
     marginBottom: 16,

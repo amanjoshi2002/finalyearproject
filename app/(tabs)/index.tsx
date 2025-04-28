@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Button, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Button, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useHistory } from '../../contexts/HistoryContext';
+import { ApiResponse } from '../../types/api';  // Import the ApiResponse interface
 
-interface ApiResponse {
-  verdict: string; // Adjusted to match the expected API response structure
-  explanation?: string; // Optional explanation from the API
-}
+// Remove the local ApiResponse interface since we're importing it
 
 export default function HomeScreen() {
   const [clipboardText, setClipboardText] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ApiResponse | null>(null); // Updated state type
+  const [result, setResult] = useState<ApiResponse | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const checkClipboard = async () => {
@@ -29,12 +29,14 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  const { addToHistory } = useHistory();
+
   const handleSubmit = async () => {
     setLoading(true);
     setResult(null);
 
     try {
-      const response = await fetch('https://a7df-2409-40c2-204e-daff-40b8-1b11-93db-1f31.ngrok-free.app/analyze', {
+      const response = await fetch('http://192.168.95.47:5000/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,6 +50,8 @@ export default function HomeScreen() {
 
       const data: ApiResponse = await response.json();
       setResult(data);
+      setModalVisible(true);
+      addToHistory(data, clipboardText); // Add to history when we get a result
     } catch (err) {
       setError('Error sending request. Please try again.');
     } finally {
@@ -72,7 +76,6 @@ export default function HomeScreen() {
             <Text style={styles.clipboardTitle}>Currently checking:</Text>
             <Text style={styles.clipboardText}>{clipboardText}</Text>
             <Button title="Submit" onPress={handleSubmit} />
-            {loading && <ActivityIndicator size="small" color="#0000ff" />}
           </View>
         ) : (
           <Text style={styles.noContent}>
@@ -80,12 +83,76 @@ export default function HomeScreen() {
           </Text>
         )}
 
-        {result && !error && (
-          <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>Verdict: {result.verdict}</Text>
-            
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContent}>
+              <ActivityIndicator size="large" color="#0000ff" />
+              <Text style={styles.loadingText}>Analyzing text...</Text>
+            </View>
           </View>
         )}
+
+        {result && !error && (
+          <View style={styles.resultContainer}>
+            <Text style={[styles.verdictText, 
+              result.verdict === "false" ? styles.scamVerdict : styles.notScamVerdict]}>
+              {result.verdict}
+            </Text>
+            
+            <Text style={styles.summaryText}>{result.summary}</Text>
+            
+            <View style={styles.evidenceContainer}>
+              <Text style={styles.evidenceTitle}>Evidence:</Text>
+              {result.evidence.map((point, index) => (
+                <Text key={index} style={styles.evidencePoint}>
+                  • {point}
+                </Text>
+              ))}
+            </View>
+            
+            <Text style={styles.sourceText}>Source: {result.source}</Text>
+          </View>
+        )}
+        
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+
+              {result && (
+                <>
+                  <Text style={[styles.verdictText, 
+                    result.verdict === "false" ? styles.scamVerdict : styles.notScamVerdict]}>
+                    {result.verdict}
+                  </Text>
+                  
+                  <Text style={styles.summaryText}>{result.summary}</Text>
+                  
+                  <View style={styles.evidenceContainer}>
+                    <Text style={styles.evidenceTitle}>Evidence:</Text>
+                    {result.evidence.map((point, index) => (
+                      <Text key={index} style={styles.evidencePoint}>
+                        • {point}
+                      </Text>
+                    ))}
+                  </View>
+                  
+                  <Text style={styles.sourceText}>Source: {result.source}</Text>
+                </>
+              )}
+            </View>
+          </View>
+        </Modal>
       </View>
     </ScrollView>
   );
@@ -154,16 +221,111 @@ const styles = StyleSheet.create({
   resultContainer: {
     marginTop: 20,
     padding: 16,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: '#fff',
     borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
-  resultText: {
+  verdictText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  scamVerdict: {
+    color: '#dc2626',
+  },
+  notScamVerdict: {
+    color: '#059669',
+  },
+  summaryText: {
     fontSize: 16,
-    color: '#00796b',
+    color: '#1f2937',
+    marginBottom: 16,
+    textAlign: 'center',
   },
-  explanationText: {
+  evidenceContainer: {
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  evidenceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  evidencePoint: {
     fontSize: 14,
-    color: '#555',
-    marginTop: 8,
+    color: '#4b5563',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  sourceText: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'right',
+    fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxHeight: '80%',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    zIndex: 1,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#1f2937',
+    fontWeight: '500',
   },
 });
