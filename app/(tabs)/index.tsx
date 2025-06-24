@@ -36,7 +36,7 @@ export default function HomeScreen() {
     setResult(null);
 
     try {
-      const response = await fetch('http://192.168.95.47:5000/analyze', {
+      const response = await fetch('http://172.20.10.7:5000/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

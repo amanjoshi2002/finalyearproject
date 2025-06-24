@@ -1,5 +1,6 @@
 # dependencies
 node_modules/
+fake_facts_detector/
 
 # expo
 .expo/
