@@ -4,7 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useHistory } from '../../contexts/HistoryContext';
 import { ApiResponse } from '../../types/api';  // Import the ApiResponse interface
 
-// Remove the local ApiResponse interface since we're importing it
+const API_URL = 'http://project.nextcraftsolution.site/analyze';
 
 export default function HomeScreen() {
   const [clipboardText, setClipboardText] = useState('');
@@ -36,7 +36,7 @@ export default function HomeScreen() {
     setResult(null);
 
     try {
-      const response = await fetch('http://172.20.10.7:5000/analyze', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
